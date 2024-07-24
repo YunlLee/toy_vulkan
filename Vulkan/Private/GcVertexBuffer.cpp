@@ -12,15 +12,19 @@
 
 namespace toy
 {
+
     GcVertexBuffer::GcVertexBuffer(VkContent* content, VkDevice* device, GcCommandBuffer* commandBuffer)
         :content_(content), device_(device), commandBuffer_(commandBuffer){
         createVertexBuffer();
+        createIndexBuffer();
     }
 
     GcVertexBuffer::~GcVertexBuffer()
     {
         VK_D(Buffer, device_->GetDevice(), mHandle);
         device_->GetDevice().freeMemory(mVertexBufferMemory);
+        VK_D(Buffer, device_->GetDevice(), mIndexBuffer);
+        device_->GetDevice().freeMemory(mIndexBufferMemory);
     }
 
     void GcVertexBuffer::createVertexBuffer()
@@ -48,6 +52,28 @@ namespace toy
         LOG_T("----------------------");
         LOG_T("{0} : buffer : {1}", __FUNCTION__, (void*)mHandle);
 
+    }
+
+    void GcVertexBuffer::createIndexBuffer()
+    {
+        vk::DeviceSize size = sizeof(indices[0]) * indices.size();
+        vk::Buffer stagingBuffer;
+        vk::DeviceMemory stagingBufferMemory;
+        createBuffer(size, vk::BufferUsageFlagBits::eTransferSrc,
+            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+            stagingBuffer, stagingBufferMemory);
+
+        void* data = device_->GetDevice().mapMemory(stagingBufferMemory, 0, size);
+        memcpy(data, indices.data(), (size_t)size);
+        device_->GetDevice().unmapMemory(stagingBufferMemory);
+
+        createBuffer(size, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer,
+            vk::MemoryPropertyFlagBits::eDeviceLocal, mIndexBuffer, mIndexBufferMemory);
+
+        copyBuffer(stagingBuffer, mIndexBuffer, size);
+
+        device_->GetDevice().destroyBuffer(stagingBuffer);
+        device_->GetDevice().freeMemory(stagingBufferMemory);
     }
 
     void GcVertexBuffer::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage,

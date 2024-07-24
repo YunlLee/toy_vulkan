@@ -4,7 +4,7 @@
 
 #include "Application.hpp"
 
-#include <GcVertexBuffer.hpp>
+#include "GcVertexBuffer.hpp"
 #include <GcImageView.hpp>
 #include <VkDevice.hpp>
 #include <VkSwapchain.hpp>
@@ -114,6 +114,8 @@ void Application::recordCommandBuffer(vk::CommandBuffer cmdBuffer, uint32_t imag
     vk::DeviceSize offsets[] = {0};
     cmdBuffer.bindVertexBuffers(0, vertexBuffer, offsets);
 
+    cmdBuffer.bindIndexBuffer(buffer_->GetIndexBuffer(), 0, vk::IndexType::eUint16);
+
     /**
      * set viewport & scissor
      * Only when the viewport and scissor are set as dynamic state
@@ -126,7 +128,8 @@ void Application::recordCommandBuffer(vk::CommandBuffer cmdBuffer, uint32_t imag
     cmdBuffer.setScissor(0, scissor);
 
     // 4. drawing
-    cmdBuffer.draw((uint32_t)vertices.size(), 1, 0, 0);
+    // cmdBuffer.draw((uint32_t)toy::vertices.size(), 1, 0, 0);
+    cmdBuffer.drawIndexed((uint32_t)toy::indices.size(), 1, 0, 0, 0);
 
     // 5. finishing up
     cmdBuffer.endRenderPass();

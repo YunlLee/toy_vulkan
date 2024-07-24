@@ -11,6 +11,17 @@
 
 namespace toy
 {
+    const std::vector<Vertex> vertices = {
+        {{-0.5f, -0.5f},{1.0f, 0.0f, 0.0f}},
+        {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+        {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+    };
+
+    const std::vector<uint16_t> indices = {
+        0, 1, 2, 2, 3, 0
+    };
+
     class VkDevice;
     class VkContent;
     class GcCommandBuffer;
@@ -22,9 +33,11 @@ namespace toy
         ~GcVertexBuffer();
 
         [[nodiscard]] vk::Buffer GetVertexBuffer() const { return mHandle; }
+        [[nodiscard]] vk::Buffer GetIndexBuffer() const { return mIndexBuffer; }
 
     private:
         void createVertexBuffer();
+        void createIndexBuffer();
         void createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage,
             vk::MemoryPropertyFlags properties, vk::Buffer& buffer, vk::DeviceMemory& memor);
         uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
@@ -35,6 +48,8 @@ namespace toy
     private:
         vk::Buffer mHandle;
         vk::DeviceMemory mVertexBufferMemory;
+        vk::Buffer mIndexBuffer;
+        vk::DeviceMemory mIndexBufferMemory;
 
         VkDevice* device_;
         VkContent* content_;
