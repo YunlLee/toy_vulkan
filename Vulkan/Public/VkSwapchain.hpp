@@ -30,7 +30,7 @@ namespace toy
         [[nodiscard]] vk::Extent2D GetExtent() const { return swapchainExtent; }
         [[nodiscard]] vk::Format GetFormat() const { return swapchainFormat;}
 
-        uint32_t getNextImageIndex(vk::Semaphore semaphore);
+        vk::ResultValue<unsigned int> getNextImageIndex(vk::Semaphore semaphore);
 
         vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availablesFormats);
         vk::PresentModeKHR chooseSwapSurfaceMode(const std::vector<vk::PresentModeKHR>& availablesPresentModes);

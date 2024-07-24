@@ -144,9 +144,9 @@ namespace toy
         LOG_T("{0} : Images array: {1}", __FUNCTION__, mImages.size());
     }
 
-    uint32_t VkSwapchain::getNextImageIndex(vk::Semaphore semaphore)
+    vk::ResultValue<unsigned int> VkSwapchain::getNextImageIndex(vk::Semaphore semaphore)
     {
         auto r = device_->GetDevice().acquireNextImageKHR(mHandle, UINT64_MAX, semaphore, nullptr);
-        return r.value;
+        return r;
     }
 }

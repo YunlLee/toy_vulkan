@@ -10,12 +10,14 @@ add_library(Vulkan
         Private/GcRenderPass.cpp
         Private/GcFramebuffer.cpp
         Private/GcCommandBuffer.cpp
+        Private/GcVertexBuffer.cpp
 )
 
 target_include_directories(Vulkan PUBLIC External)
 target_include_directories(Vulkan PUBLIC ${CMAKE_CURRENT_LIST_DIR}/../../ThirtyLib/Vulkan/Include)
 
 add_subdirectory(External/glfw)
+add_subdirectory(External/glm)
 
 target_link_libraries(Vulkan PUBLIC glfw)
 target_link_libraries(Vulkan PUBLIC vulkan-1.lib)

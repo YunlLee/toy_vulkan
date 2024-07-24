@@ -4,6 +4,7 @@
 
 #include "Application.hpp"
 
+#include <GcVertexBuffer.hpp>
 #include <GcImageView.hpp>
 #include <VkDevice.hpp>
 #include <VkSwapchain.hpp>
@@ -39,9 +40,12 @@ void Application::initVulkan()
     renderPass_ = std::make_shared<toy::GcRenderPass>(device_.get(), swapchain_.get());
     pipeline_ = std::make_shared<toy::GcPipeline>(device_.get(), swapchain_.get(), renderPass_.get());
     framebuffer_ = std::make_shared<toy::GcFramebuffer>(device_.get(), imageView_.get(), renderPass_.get());
+    buffer_ = std::make_shared<toy::GcVertexBuffer>(content_.get(), device_.get());
     commandBuffer_ = std::make_shared<toy::GcCommandBuffer>(content_.get(), device_.get());
 
     createSyncObject();
+
+    cmdBuffers = commandBuffer_->allocateCommandBuffers(MAX_FRAMES_IN_FLIGHT);
 }
 
 void Application::mainLoop()
@@ -56,19 +60,31 @@ void Application::mainLoop()
 
 void Application::cleanUp()
 {
-    VK_D(Semaphore, device_->GetDevice(), imageAvailableSemaphore);
-    VK_D(Semaphore, device_->GetDevice(), renderFinishedSemaphore);
-    VK_D(Fence, device_->GetDevice(), inFlightFence);
+    for(size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        VK_D(Semaphore, device_->GetDevice(), imageAvailableSemaphores[i]);
+        VK_D(Semaphore, device_->GetDevice(), renderFinishedSemaphores[i]);
+        VK_D(Fence, device_->GetDevice(), inFlightFences[i]);
+    }
 
     commandBuffer_.reset();
+    buffer_.reset();
     framebuffer_.reset();
     pipeline_.reset();
     renderPass_.reset();
     imageView_.reset();
     swapchain_.reset();
+    // cleanupSwapChain();
     device_.reset();
     content_.reset();
     window_.reset();
+}
+
+void Application::cleanupSwapChain()
+{
+    framebuffer_.reset();
+    imageView_.reset();
+    swapchain_.reset();
 }
 
 void Application::recordCommandBuffer(vk::CommandBuffer cmdBuffer, uint32_t imageIndex)
@@ -94,6 +110,10 @@ void Application::recordCommandBuffer(vk::CommandBuffer cmdBuffer, uint32_t imag
     // 3. bind render graphic pipeline
     cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline_->GetPipeline());
 
+    vk::Buffer vertexBuffer[] = { buffer_->GetVertexBuffer() };
+    vk::DeviceSize offsets[] = {0};
+    cmdBuffer.bindVertexBuffers(0, vertexBuffer, offsets);
+
     /**
      * set viewport & scissor
      * Only when the viewport and scissor are set as dynamic state
@@ -106,7 +126,7 @@ void Application::recordCommandBuffer(vk::CommandBuffer cmdBuffer, uint32_t imag
     cmdBuffer.setScissor(0, scissor);
 
     // 4. drawing
-    cmdBuffer.draw(3, 1, 0, 0);
+    cmdBuffer.draw((uint32_t)vertices.size(), 1, 0, 0);
 
     // 5. finishing up
     cmdBuffer.endRenderPass();
@@ -115,30 +135,42 @@ void Application::recordCommandBuffer(vk::CommandBuffer cmdBuffer, uint32_t imag
 
 void Application::drawFrame()
 {
-    auto r = device_->GetDevice().waitForFences(inFlightFence, true, UINT64_MAX);
-    device_->GetDevice().resetFences(inFlightFence);
-    uint32_t imageIndex = swapchain_->getNextImageIndex(imageAvailableSemaphore);
+    auto result = device_->GetDevice().waitForFences(inFlightFences[currentFrame], true, UINT64_MAX);
 
-    vk::CommandBuffer cmdBuffer = commandBuffer_->allocateCommandBuffers(1)[0];
+    // acquire image from swapchain
+    auto rv = swapchain_->getNextImageIndex(imageAvailableSemaphores[currentFrame]);
+    uint32_t imageIndex = rv.value;
+
+    if(rv.result == vk::Result::eErrorOutOfDateKHR)
+    {
+        recreateSwapChain();
+        return;
+    }else if(rv.result != vk::Result::eSuccess && rv.result != vk::Result::eSuboptimalKHR)
+    {
+        throw std::runtime_error("failed to acquire swap chain image!");
+    }
+
+    device_->GetDevice().resetFences(inFlightFences[currentFrame]);
+
     // 1. reset commandbuffer
-    cmdBuffer.reset();
+    cmdBuffers[currentFrame].reset();
 
     // 2. recording command
-    recordCommandBuffer(cmdBuffer, imageIndex);
+    recordCommandBuffer(cmdBuffers[currentFrame], imageIndex);
 
     // 3. submitting the command buffer
-    vk::Semaphore waitSemaphores[] = { imageAvailableSemaphore };
-    vk::Semaphore signalSemaphores[] = {renderFinishedSemaphore};
+    vk::Semaphore waitSemaphores[] = {imageAvailableSemaphores[currentFrame]};
+    vk::Semaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
     vk::PipelineStageFlags waitStages[] = {vk::PipelineStageFlagBits::eColorAttachmentOutput };
     vk::SubmitInfo submitInfo;
     submitInfo.setWaitSemaphoreCount(1)
         .setPWaitSemaphores(waitSemaphores)
         .setWaitDstStageMask(waitStages)
         .setCommandBufferCount(1)
-        .setPCommandBuffers(&cmdBuffer)
+        .setPCommandBuffers(&cmdBuffers[currentFrame])
         .setSignalSemaphoreCount(1)
         .setPSignalSemaphores(signalSemaphores);
-    device_->GetGraphic()[0]->GetHandle().submit(submitInfo, inFlightFence);
+    device_->GetGraphic()[0]->GetHandle().submit(submitInfo, inFlightFences[currentFrame]);
 
     // 4. present
     vk::PresentInfoKHR presentInfo;
@@ -149,18 +181,56 @@ void Application::drawFrame()
         .setPSwapchains(swapchain)
         .setPImageIndices(&imageIndex)
         .setPResults(nullptr);
-    r = device_->GetPresent()[0]->GetHandle().presentKHR(presentInfo);
+
+    auto r = device_->GetPresent()[0]->GetHandle().presentKHR(presentInfo);
+    if(r == vk::Result::eErrorOutOfDateKHR)
+    {
+        recreateSwapChain();
+
+    }else if(r != vk::Result::eSuccess)
+    {
+        throw std::runtime_error("failed to present swap chain image!");
+    }
+    currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
 void Application::createSyncObject()
 {
+    imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+    renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+    inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+
     vk::SemaphoreCreateInfo semaphoreInfo;
     semaphoreInfo.setFlags({});
 
     vk::FenceCreateInfo fenceInfo;
     fenceInfo.setFlags(vk::FenceCreateFlagBits::eSignaled);
 
-    VK_CREATE(imageAvailableSemaphore = device_->GetDevice().createSemaphore(semaphoreInfo), "failed to create semaphores!");
-    VK_CREATE(renderFinishedSemaphore = device_->GetDevice().createSemaphore(semaphoreInfo), "failed to create semaphores!");
-    VK_CREATE(inFlightFence = device_->GetDevice().createFence(fenceInfo), "failed to create fence!");
+    for(size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        VK_CREATE(imageAvailableSemaphores[i] = device_->GetDevice().createSemaphore(semaphoreInfo), "failed to create semaphores!");
+        VK_CREATE(renderFinishedSemaphores[i] = device_->GetDevice().createSemaphore(semaphoreInfo), "failed to create semaphores!");
+        VK_CREATE(inFlightFences[i] = device_->GetDevice().createFence(fenceInfo), "failed to create fence!");
+    }
 }
+
+void Application::recreateSwapChain()
+{
+    int w, h;
+    glfwGetWindowSize(window_->GetHandle(), &w, &h);
+    while(w == 0 || h == 0)
+    {
+        glfwGetWindowSize(window_->GetHandle(), &w, &h);
+        glfwWaitEvents();
+    }
+
+    device_->GetDevice().waitIdle();
+
+    cleanupSwapChain();
+
+    swapchain_ = std::make_shared<toy::VkSwapchain>(content_.get(), device_.get());
+    imageView_ = std::make_shared<toy::GcImageView>(device_.get(), swapchain_.get());
+    framebuffer_ = std::make_shared<toy::GcFramebuffer>(device_.get(), imageView_.get(), renderPass_.get());
+}
+
+

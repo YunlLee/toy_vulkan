@@ -55,8 +55,8 @@ namespace toy
     {
         // programmable
         // shader module
-        auto vertexShaderCode = readFile(GC_RES_SHADER_DIR"00_triangle.vert.spv");
-        auto fragmentShaderCode = readFile(GC_RES_SHADER_DIR"00_triangle.frag.spv");
+        auto vertexShaderCode = readFile(GC_RES_SHADER_DIR"triangle.vert.spv");
+        auto fragmentShaderCode = readFile(GC_RES_SHADER_DIR"triangle.frag.spv");
 
         vk::ShaderModule mVertModule = createShaderModule(vertexShaderCode);
         vk::ShaderModule mFragModule = createShaderModule(fragmentShaderCode);
@@ -80,9 +80,14 @@ namespace toy
 
 
         // Vertex input
+        auto bindingDescription = Vertex::getBindingDescription();
+        auto attributeDescription = Vertex::getAttributeDescriptions();
+
         vk::PipelineVertexInputStateCreateInfo vertexInputInfo;
-        vertexInputInfo.setVertexBindingDescriptionCount(0)
-            .setVertexAttributeDescriptionCount(0);
+        vertexInputInfo.setVertexBindingDescriptionCount(1)
+            .setPVertexBindingDescriptions(&bindingDescription)
+            .setVertexAttributeDescriptionCount((uint32_t)attributeDescription.size())
+            .setPVertexAttributeDescriptions(attributeDescription.data());
 
         // Input assembly
         vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState;

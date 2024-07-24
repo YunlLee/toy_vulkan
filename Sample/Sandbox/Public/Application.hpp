@@ -17,6 +17,7 @@ namespace toy
     class GcPipeline;
     class GcFramebuffer;
     class GcCommandBuffer;
+    class GcVertexBuffer;
 }
 
 
@@ -25,6 +26,7 @@ class Application
 public:
     void run();
 
+    bool framebufferResized = false;
 private:
     void initWindow();
     void initVulkan();
@@ -34,10 +36,16 @@ private:
     void recordCommandBuffer(vk::CommandBuffer cmdBuffer, uint32_t imageIndex);
     void drawFrame();
     void createSyncObject();
+
+    void recreateSwapChain();
+    void cleanupSwapChain();
 private:
-    vk::Semaphore imageAvailableSemaphore;
-    vk::Semaphore renderFinishedSemaphore;
-    vk::Fence inFlightFence;
+    std::vector<vk::CommandBuffer> cmdBuffers;
+    std::vector<vk::Semaphore> imageAvailableSemaphores;
+    std::vector<vk::Semaphore> renderFinishedSemaphores;
+    std::vector<vk::Fence> inFlightFences;
+
+    uint32_t currentFrame = 0;
 
     std::shared_ptr<toy::Window> window_;
     std::shared_ptr<toy::VkContent> content_;
@@ -48,6 +56,7 @@ private:
     std::shared_ptr<toy::GcPipeline> pipeline_;
     std::shared_ptr<toy::GcFramebuffer> framebuffer_;
     std::shared_ptr<toy::GcCommandBuffer> commandBuffer_;
+    std::shared_ptr<toy::GcVertexBuffer> buffer_;
 };
 
 #endif //APPLICATION_HPP

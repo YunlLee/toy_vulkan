@@ -8,6 +8,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.hpp>
+#include <glm/glm.hpp>
 
 // Cpp std
 #include <iostream>
@@ -27,6 +28,7 @@
 
 //
 #include "VkLog.hpp"
+#include "Vertex.hpp"
 
 const std::vector<const char*> validationLayer{
     "VK_LAYER_KHRONOS_validation"
@@ -35,6 +37,8 @@ const std::vector<const char*> validationLayer{
 const std::vector<const char*> deviceExtensions{
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 };
+
+const int MAX_FRAMES_IN_FLIGHT = 2;
 
 #ifdef NDEBUG
     const bool enableValidationLayer = false;
@@ -70,5 +74,11 @@ static std::vector<char> readFile(const std::string& filename)
     file.close();
     return buffer;
 }
+
+const std::vector<toy::Vertex> vertices = {
+    {{0.0f, -0.5f},{1.0f, 0.0f, 0.0f}},
+    {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+    {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+};
 
 #endif //COMMON_HPP
