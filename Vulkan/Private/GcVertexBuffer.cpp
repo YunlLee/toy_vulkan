@@ -3,14 +3,18 @@
 //
 
 #include "GcVertexBuffer.hpp"
+
+#include <VkQueue.hpp>
+
 #include "VkDevice.hpp"
 #include "VkContent.hpp"
+#include "GcCommandBuffer.hpp"
 
 namespace toy
 {
-    GcVertexBuffer::GcVertexBuffer(VkContent* content, VkDevice* device)
-        :content_(content), device_(device){
-        createCommandBuffer();
+    GcVertexBuffer::GcVertexBuffer(VkContent* content, VkDevice* device, GcCommandBuffer* commandBuffer)
+        :content_(content), device_(device), commandBuffer_(commandBuffer){
+        createVertexBuffer();
     }
 
     GcVertexBuffer::~GcVertexBuffer()
@@ -19,19 +23,79 @@ namespace toy
         device_->GetDevice().freeMemory(mVertexBufferMemory);
     }
 
-    void GcVertexBuffer::createCommandBuffer()
+    void GcVertexBuffer::createVertexBuffer()
     {
-        vk::BufferCreateInfo bufferCreateInfo;
-        bufferCreateInfo.setSize(sizeof(vertices[0]) * vertices.size())
-            .setUsage(vk::BufferUsageFlagBits::eVertexBuffer)
-            .setSharingMode(vk::SharingMode::eExclusive);
+        vk::Buffer stagingBuffer;
+        vk::DeviceMemory stagingBufferMemory;
+        vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+        createBuffer(bufferSize, vk::BufferUsageFlagBits::eTransferSrc,
+            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+            stagingBuffer, stagingBufferMemory);
 
-        VK_CREATE(mHandle = device_->GetDevice().createBuffer(bufferCreateInfo), "failed to create buffer!");
+        void* data = device_->GetDevice().mapMemory(stagingBufferMemory, 0, bufferSize);
+        memcpy(data, vertices.data(), (size_t)bufferSize);
+        device_->GetDevice().unmapMemory(stagingBufferMemory);
+
+        createBuffer(bufferSize,
+            vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer,
+            vk::MemoryPropertyFlagBits::eDeviceLocal,
+            mHandle, mVertexBufferMemory);
+
+        copyBuffer(stagingBuffer, mHandle, bufferSize);
+
+        device_->GetDevice().destroyBuffer(stagingBuffer);
+        device_->GetDevice().freeMemory(stagingBufferMemory);
         LOG_T("----------------------");
         LOG_T("{0} : buffer : {1}", __FUNCTION__, (void*)mHandle);
 
-        allocateBufferMemory();
-        fillingVertexBuffer(bufferCreateInfo.size);
+    }
+
+    void GcVertexBuffer::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage,
+            vk::MemoryPropertyFlags properties, vk::Buffer& buffer, vk::DeviceMemory& bufferMemory)
+    {
+        vk::BufferCreateInfo bufferInfo;
+        bufferInfo.setSize(size)
+            .setUsage(usage)
+            .setSharingMode(vk::SharingMode::eExclusive);
+        buffer = device_->GetDevice().createBuffer(bufferInfo);
+
+        vk::MemoryRequirements memoryRequirements = device_->GetDevice().getBufferMemoryRequirements(buffer);
+        vk::MemoryAllocateInfo allocateInfo;
+        allocateInfo.setAllocationSize(memoryRequirements.size)
+            .setMemoryTypeIndex(findMemoryType(memoryRequirements.memoryTypeBits, properties));
+        bufferMemory = device_->GetDevice().allocateMemory(allocateInfo);
+
+        device_->GetDevice().bindBufferMemory(buffer, bufferMemory, 0);
+    }
+
+    void GcVertexBuffer::copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size)
+    {
+        vk::CommandBufferAllocateInfo allocateInfo;
+        allocateInfo.setLevel(vk::CommandBufferLevel::ePrimary)
+            .setCommandPool(commandBuffer_->GetCommandPool())
+            .setCommandBufferCount(1);
+
+        auto cmdBuffer = device_->GetDevice().allocateCommandBuffers(allocateInfo)[0];
+
+        vk::CommandBufferBeginInfo beginInfo;
+        beginInfo.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+        cmdBuffer.begin(beginInfo);
+
+        vk::BufferCopy copyRegion;
+        copyRegion.setSrcOffset(0)
+            .setDstOffset(0)
+            .setSize(size);
+        cmdBuffer.copyBuffer(srcBuffer, dstBuffer, copyRegion);
+
+        cmdBuffer.end();
+
+        vk::SubmitInfo submitInfo;
+        submitInfo.setCommandBufferCount(1)
+            .setPCommandBuffers(&cmdBuffer);
+        device_->GetGraphic()[0]->GetHandle().submit(submitInfo);
+        device_->GetGraphic()[0]->GetHandle().waitIdle();
+
+        device_->GetDevice().freeCommandBuffers(commandBuffer_->GetCommandPool(), cmdBuffer);
     }
 
     /**
@@ -88,4 +152,6 @@ namespace toy
         memcpy(data, vertices.data(), (size_t)size_);
         device_->GetDevice().unmapMemory(mVertexBufferMemory);
     }
+
+
 }

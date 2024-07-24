@@ -40,8 +40,8 @@ void Application::initVulkan()
     renderPass_ = std::make_shared<toy::GcRenderPass>(device_.get(), swapchain_.get());
     pipeline_ = std::make_shared<toy::GcPipeline>(device_.get(), swapchain_.get(), renderPass_.get());
     framebuffer_ = std::make_shared<toy::GcFramebuffer>(device_.get(), imageView_.get(), renderPass_.get());
-    buffer_ = std::make_shared<toy::GcVertexBuffer>(content_.get(), device_.get());
     commandBuffer_ = std::make_shared<toy::GcCommandBuffer>(content_.get(), device_.get());
+    buffer_ = std::make_shared<toy::GcVertexBuffer>(content_.get(), device_.get(), commandBuffer_.get());
 
     createSyncObject();
 
@@ -67,8 +67,8 @@ void Application::cleanUp()
         VK_D(Fence, device_->GetDevice(), inFlightFences[i]);
     }
 
-    commandBuffer_.reset();
     buffer_.reset();
+    commandBuffer_.reset();
     framebuffer_.reset();
     pipeline_.reset();
     renderPass_.reset();

@@ -19,10 +19,10 @@ namespace toy
         ~GcCommandBuffer();
 
         std::vector<vk::CommandBuffer> allocateCommandBuffers(uint32_t count);
+        [[nodiscard]] vk::CommandPool GetCommandPool() const { return mCommandPool; }
 
     private:
         void createCommandPool();
-
         vk::CommandPool mCommandPool;
 
         VkDevice* device_;
