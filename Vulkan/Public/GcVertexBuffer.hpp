@@ -34,6 +34,9 @@ namespace toy
 
         [[nodiscard]] vk::Buffer GetVertexBuffer() const { return mHandle; }
         [[nodiscard]] vk::Buffer GetIndexBuffer() const { return mIndexBuffer; }
+        [[nodiscard]] std::vector<vk::Buffer> GetUniformBuffers() const { return uniformBuffers; }
+        [[nodiscard]] std::vector<vk::DeviceMemory> GetUniformBuffersMemory() const { return uniformBuffersMemory; }
+        [[nodiscard]] std::vector<void*> GetUniformBuffersMapped() const { return uniformBuffersMapped; }
 
     private:
         void createVertexBuffer();
@@ -44,12 +47,17 @@ namespace toy
         void allocateBufferMemory();
         void fillingVertexBuffer(vk::DeviceSize size_);
         void copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size);
+        void createUniformBuffers();
 
     private:
         vk::Buffer mHandle;
         vk::DeviceMemory mVertexBufferMemory;
         vk::Buffer mIndexBuffer;
         vk::DeviceMemory mIndexBufferMemory;
+
+        std::vector<vk::Buffer> uniformBuffers;
+        std::vector<vk::DeviceMemory> uniformBuffersMemory;
+        std::vector<void*> uniformBuffersMapped;
 
         VkDevice* device_;
         VkContent* content_;

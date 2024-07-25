@@ -4,6 +4,8 @@
 
 #ifndef GCPIPELINE_HPP
 #define GCPIPELINE_HPP
+#include <GcDescriptorSetLayout.hpp>
+
 #include "Common.hpp"
 
 namespace toy
@@ -11,14 +13,16 @@ namespace toy
     class VkDevice;
     class VkSwapchain;
     class GcRenderPass;
+    class GcDescriptorSetLayout;
 
     class GcPipeline
     {
     public:
-        GcPipeline(VkDevice* device, VkSwapchain* swapchain, GcRenderPass* renderPass);
+        GcPipeline(VkDevice* device, VkSwapchain* swapchain, GcRenderPass* renderPass, GcDescriptorSetLayout* dsl);
         ~GcPipeline();
 
         [[nodiscard]] vk::Pipeline GetPipeline() const { return mHandle; }
+        [[nodiscard]] vk::PipelineLayout GetPipelineLayout() const { return mPipelineLayout; }
 
     private:
         void createGraphicsPipeline();
@@ -31,6 +35,7 @@ namespace toy
         VkDevice* device_;
         VkSwapchain* swapchain_;
         GcRenderPass* renderPass_;
+        GcDescriptorSetLayout* descriptorSetLayout_;
     };
 }
 

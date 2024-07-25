@@ -18,6 +18,8 @@ namespace toy
     class GcFramebuffer;
     class GcCommandBuffer;
     class GcVertexBuffer;
+    class GcDescriptorSetLayout;
+    class GcDescriptor;
 }
 
 
@@ -39,6 +41,8 @@ private:
 
     void recreateSwapChain();
     void cleanupSwapChain();
+
+    void updateUniformBuffer(uint32_t currentImage);
 private:
     std::vector<vk::CommandBuffer> cmdBuffers;
     std::vector<vk::Semaphore> imageAvailableSemaphores;
@@ -53,10 +57,12 @@ private:
     std::shared_ptr<toy::VkSwapchain> swapchain_;
     std::shared_ptr<toy::GcImageView> imageView_;
     std::shared_ptr<toy::GcRenderPass> renderPass_;
+    std::shared_ptr<toy::GcDescriptorSetLayout> descriptorSetLayout_;
     std::shared_ptr<toy::GcPipeline> pipeline_;
     std::shared_ptr<toy::GcFramebuffer> framebuffer_;
     std::shared_ptr<toy::GcCommandBuffer> commandBuffer_;
     std::shared_ptr<toy::GcVertexBuffer> buffer_;
+    std::shared_ptr<toy::GcDescriptor> descriptor_;
 };
 
 #endif //APPLICATION_HPP

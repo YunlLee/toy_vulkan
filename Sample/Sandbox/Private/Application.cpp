@@ -10,13 +10,13 @@
 #include <VkSwapchain.hpp>
 #include <GcRenderPass.hpp>
 #include <VkQueue.hpp>
-
 #include "GcFramebuffer.hpp"
 #include "GcPipeline.hpp"
-
 #include "Window.hpp"
 #include "VkContent.hpp"
 #include "GcCommandBuffer.hpp"
+#include "GcDescriptorSetLayout.hpp"
+#include "GcDescriptor.hpp"
 
 void Application::run()
 {
@@ -38,13 +38,15 @@ void Application::initVulkan()
     swapchain_ = std::make_shared<toy::VkSwapchain>(content_.get(), device_.get());
     imageView_ = std::make_shared<toy::GcImageView>(device_.get(), swapchain_.get());
     renderPass_ = std::make_shared<toy::GcRenderPass>(device_.get(), swapchain_.get());
-    pipeline_ = std::make_shared<toy::GcPipeline>(device_.get(), swapchain_.get(), renderPass_.get());
+    descriptorSetLayout_ = std::make_shared<toy::GcDescriptorSetLayout>(device_.get());
+    pipeline_ = std::make_shared<toy::GcPipeline>(device_.get(), swapchain_.get(),
+        renderPass_.get(), descriptorSetLayout_.get());
     framebuffer_ = std::make_shared<toy::GcFramebuffer>(device_.get(), imageView_.get(), renderPass_.get());
     commandBuffer_ = std::make_shared<toy::GcCommandBuffer>(content_.get(), device_.get());
     buffer_ = std::make_shared<toy::GcVertexBuffer>(content_.get(), device_.get(), commandBuffer_.get());
+    descriptor_ = std::make_shared<toy::GcDescriptor>(device_.get(), descriptorSetLayout_.get(), buffer_.get());
 
     createSyncObject();
-
     cmdBuffers = commandBuffer_->allocateCommandBuffers(MAX_FRAMES_IN_FLIGHT);
 }
 
@@ -67,10 +69,12 @@ void Application::cleanUp()
         VK_D(Fence, device_->GetDevice(), inFlightFences[i]);
     }
 
+    descriptor_.reset();
     buffer_.reset();
     commandBuffer_.reset();
     framebuffer_.reset();
     pipeline_.reset();
+    descriptorSetLayout_.reset();
     renderPass_.reset();
     imageView_.reset();
     swapchain_.reset();
@@ -116,6 +120,9 @@ void Application::recordCommandBuffer(vk::CommandBuffer cmdBuffer, uint32_t imag
 
     cmdBuffer.bindIndexBuffer(buffer_->GetIndexBuffer(), 0, vk::IndexType::eUint16);
 
+    cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+        pipeline_->GetPipelineLayout(), 0, descriptor_->GetDescriptorSet()[currentFrame], nullptr);
+
     /**
      * set viewport & scissor
      * Only when the viewport and scissor are set as dynamic state
@@ -123,7 +130,6 @@ void Application::recordCommandBuffer(vk::CommandBuffer cmdBuffer, uint32_t imag
     vk::Viewport viewport{0, 0,
         (float)swapchain_->GetExtent().width, (float)swapchain_->GetExtent().height, 0, 1};
     cmdBuffer.setViewport(0, viewport);
-
     vk::Rect2D scissor{{0,0}, {swapchain_->GetExtent()}};
     cmdBuffer.setScissor(0, scissor);
 
@@ -153,6 +159,7 @@ void Application::drawFrame()
         throw std::runtime_error("failed to acquire swap chain image!");
     }
 
+    updateUniformBuffer(currentFrame);
     device_->GetDevice().resetFences(inFlightFences[currentFrame]);
 
     // 1. reset commandbuffer
@@ -160,6 +167,8 @@ void Application::drawFrame()
 
     // 2. recording command
     recordCommandBuffer(cmdBuffers[currentFrame], imageIndex);
+
+    // update uniform buffer
 
     // 3. submitting the command buffer
     vk::Semaphore waitSemaphores[] = {imageAvailableSemaphores[currentFrame]};
@@ -234,6 +243,26 @@ void Application::recreateSwapChain()
     swapchain_ = std::make_shared<toy::VkSwapchain>(content_.get(), device_.get());
     imageView_ = std::make_shared<toy::GcImageView>(device_.get(), swapchain_.get());
     framebuffer_ = std::make_shared<toy::GcFramebuffer>(device_.get(), imageView_.get(), renderPass_.get());
+}
+
+void Application::updateUniformBuffer(uint32_t currentImage)
+{
+    static auto startTime = std::chrono::high_resolution_clock::now();
+
+    auto currentTime = std::chrono::high_resolution_clock::now();
+
+    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+    toy::UniformBufferObject ubo{};
+    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.1f));
+
+    ubo.proj = glm::perspective(glm::radians(45.0f), (float)swapchain_->GetExtent().width / (float)swapchain_->GetExtent().height, 0.1f, 10.0f);
+
+    ubo.proj[1][1] *= -1;
+
+    memcpy(buffer_->GetUniformBuffersMapped()[currentFrame], &ubo, sizeof(ubo));
 }
 
 

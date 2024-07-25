@@ -11,6 +11,8 @@ add_library(Vulkan
         Private/GcFramebuffer.cpp
         Private/GcCommandBuffer.cpp
         Private/GcVertexBuffer.cpp
+        Private/GcDescriptorSetLayout.cpp
+        Private/GcDescriptor.cpp
 )
 
 target_include_directories(Vulkan PUBLIC External)

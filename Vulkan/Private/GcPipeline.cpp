@@ -6,14 +6,14 @@
 #include "VkDevice.hpp"
 #include "VkSwapchain.hpp"
 #include "GcRenderPass.hpp"
-
-#include <Common.hpp>
-#include <GcPipeline.hpp>
+#include "Common.hpp"
+#include "GcPipeline.hpp"
+#include "GcDescriptorSetLayout.hpp"
 
 namespace toy
 {
-    GcPipeline::GcPipeline(VkDevice* device, VkSwapchain* swapchain, GcRenderPass* renderPass)
-        :device_(device), swapchain_(swapchain), renderPass_(renderPass){
+    GcPipeline::GcPipeline(VkDevice* device, VkSwapchain* swapchain, GcRenderPass* renderPass, GcDescriptorSetLayout* dsl)
+        :device_(device), swapchain_(swapchain), renderPass_(renderPass), descriptorSetLayout_(dsl){
         createPipelineLayout();
         createGraphicsPipeline();
     }
@@ -42,10 +42,14 @@ namespace toy
     void GcPipeline::createPipelineLayout()
     {
         vk::PipelineLayoutCreateInfo createInfo;
+        vk::DescriptorSetLayout layout = descriptorSetLayout_->GetDescriptorSet();
+
         createInfo.setSetLayoutCount(0)
             .setPSetLayouts(nullptr)
             .setPushConstantRangeCount(0)
-            .setPPushConstantRanges(nullptr);
+            .setPPushConstantRanges(nullptr)
+            .setSetLayoutCount(1)
+            .setSetLayouts(layout);
 
         VK_CREATE(mPipelineLayout = device_->GetDevice().createPipelineLayout(createInfo),"failed to create pipeline layout!");
         LOG_T("{0} : Pipeline layout: {1}", __FUNCTION__, (void*)mPipelineLayout);
@@ -113,7 +117,7 @@ namespace toy
             .setPolygonMode(vk::PolygonMode::eFill)
             .setLineWidth(1.0f)
             .setCullMode(vk::CullModeFlagBits::eBack)
-            .setFrontFace(vk::FrontFace::eClockwise)
+            .setFrontFace(vk::FrontFace::eCounterClockwise)
             .setDepthBiasEnable(false);
 
         // multisampling

@@ -17,6 +17,7 @@ namespace toy
         :content_(content), device_(device), commandBuffer_(commandBuffer){
         createVertexBuffer();
         createIndexBuffer();
+        createUniformBuffers();
     }
 
     GcVertexBuffer::~GcVertexBuffer()
@@ -25,6 +26,11 @@ namespace toy
         device_->GetDevice().freeMemory(mVertexBufferMemory);
         VK_D(Buffer, device_->GetDevice(), mIndexBuffer);
         device_->GetDevice().freeMemory(mIndexBufferMemory);
+        for(int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+        {
+            device_->GetDevice().destroyBuffer(uniformBuffers[i]);
+            device_->GetDevice().freeMemory(uniformBuffersMemory[i]);
+        }
     }
 
     void GcVertexBuffer::createVertexBuffer()
@@ -76,8 +82,24 @@ namespace toy
         device_->GetDevice().freeMemory(stagingBufferMemory);
     }
 
+    void GcVertexBuffer::createUniformBuffers()
+    {
+        vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
+        uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+        uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
+        uniformBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
+
+        for(int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+        {
+            createBuffer(bufferSize, vk::BufferUsageFlagBits::eUniformBuffer,
+                vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible,
+                uniformBuffers[i], uniformBuffersMemory[i]);
+            uniformBuffersMapped[i] = device_->GetDevice().mapMemory(uniformBuffersMemory[i], 0, bufferSize);
+        }
+    }
+
     void GcVertexBuffer::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage,
-            vk::MemoryPropertyFlags properties, vk::Buffer& buffer, vk::DeviceMemory& bufferMemory)
+                                      vk::MemoryPropertyFlags properties, vk::Buffer& buffer, vk::DeviceMemory& bufferMemory)
     {
         vk::BufferCreateInfo bufferInfo;
         bufferInfo.setSize(size)
