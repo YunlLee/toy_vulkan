@@ -13,6 +13,10 @@ add_library(Vulkan
         Private/GcVertexBuffer.cpp
         Private/GcDescriptorSetLayout.cpp
         Private/GcDescriptor.cpp
+
+        External/image/stb_image.cpp
+        Private/GcTextureImage.cpp
+        Private/GcTextureSampler.cpp
 )
 
 target_include_directories(Vulkan PUBLIC External)

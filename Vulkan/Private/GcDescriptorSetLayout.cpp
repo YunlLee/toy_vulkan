@@ -28,9 +28,18 @@ namespace toy
             .setStageFlags(vk::ShaderStageFlagBits::eVertex)
             .setPImmutableSamplers(nullptr);
 
+        vk::DescriptorSetLayoutBinding samplerLayoutBinding;
+        samplerLayoutBinding.setBinding(1)
+            .setDescriptorCount(1)
+            .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
+            .setPImmutableSamplers(nullptr)
+            .setStageFlags(vk::ShaderStageFlagBits::eFragment);
+
+        std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {uboLayoutBinding, samplerLayoutBinding};
+
         vk::DescriptorSetLayoutCreateInfo layoutInfo;
-        layoutInfo.setBindingCount(1)
-            .setPBindings(&uboLayoutBinding);
+        layoutInfo.setBindingCount((uint32_t)bindings.size())
+            .setPBindings(bindings.data());
         mDesSetLayout = device_->GetDevice().createDescriptorSetLayout(layoutInfo);
 
         LOG_T("----------------------");

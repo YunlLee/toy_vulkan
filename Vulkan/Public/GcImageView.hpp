@@ -24,6 +24,8 @@ namespace toy
         [[nodiscard]] uint32_t GetImageWidth() const { return swapchain_->GetExtent().width; }
         [[nodiscard]] uint32_t GetImageHeight() const { return swapchain_->GetExtent().height; }
 
+        vk::ImageView createTextureImageView(vk::Image img);
+
     private:
         void createImageView();
 

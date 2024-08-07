@@ -17,6 +17,8 @@
 #include "GcCommandBuffer.hpp"
 #include "GcDescriptorSetLayout.hpp"
 #include "GcDescriptor.hpp"
+#include "GcTextureImage.hpp"
+#include "GcTextureSampler.hpp"
 
 void Application::run()
 {
@@ -43,10 +45,15 @@ void Application::initVulkan()
         renderPass_.get(), descriptorSetLayout_.get());
     framebuffer_ = std::make_shared<toy::GcFramebuffer>(device_.get(), imageView_.get(), renderPass_.get());
     commandBuffer_ = std::make_shared<toy::GcCommandBuffer>(content_.get(), device_.get());
+    texture_ = std::make_shared<toy::GcTextureImage>(device_.get(), content_.get(), commandBuffer_.get());
+    textureImgView = imageView_->createTextureImageView(texture_->GetTextureImage());
     buffer_ = std::make_shared<toy::GcVertexBuffer>(content_.get(), device_.get(), commandBuffer_.get());
-    descriptor_ = std::make_shared<toy::GcDescriptor>(device_.get(), descriptorSetLayout_.get(), buffer_.get());
+    textureSampler_ = std::make_shared<toy::GcTextureSampler>(content_.get(), device_.get());
+    descriptor_ = std::make_shared<toy::GcDescriptor>(device_.get(), descriptorSetLayout_.get(), buffer_.get(), textureSampler_.get(), textureImgView);
+
 
     createSyncObject();
+
     cmdBuffers = commandBuffer_->allocateCommandBuffers(MAX_FRAMES_IN_FLIGHT);
 }
 
@@ -69,8 +76,13 @@ void Application::cleanUp()
         VK_D(Fence, device_->GetDevice(), inFlightFences[i]);
     }
 
+    textureSampler_.reset();
+
+
     descriptor_.reset();
+    texture_.reset();
     buffer_.reset();
+    device_->GetDevice().destroyImageView(textureImgView);
     commandBuffer_.reset();
     framebuffer_.reset();
     pipeline_.reset();

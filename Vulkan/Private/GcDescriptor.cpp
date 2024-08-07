@@ -7,11 +7,12 @@
 #include "VkDevice.hpp"
 #include "GcDescriptorSetLayout.hpp"
 #include "GcVertexBuffer.hpp"
+#include "GcTextureSampler.hpp"
 
 namespace toy
 {
-    GcDescriptor::GcDescriptor(VkDevice* device, GcDescriptorSetLayout* layout, GcVertexBuffer* vertexBuffer)
-        :device_(device), descSetLayout_(layout), vertexBuffer_(vertexBuffer){
+    GcDescriptor::GcDescriptor(VkDevice* device, GcDescriptorSetLayout* layout, GcVertexBuffer* vertexBuffer, GcTextureSampler* sampler, vk::ImageView& img)
+        :device_(device), descSetLayout_(layout), vertexBuffer_(vertexBuffer), textureSampler_(sampler), mTextureImageView(img){
         createDescriptorPool();
         createDescriptorSet();
     }
@@ -23,12 +24,15 @@ namespace toy
 
     void GcDescriptor::createDescriptorPool()
     {
-        vk::DescriptorPoolSize poolSize;
-        poolSize.setDescriptorCount((uint32_t)MAX_FRAMES_IN_FLIGHT);
+        std::array<vk::DescriptorPoolSize, 2> poolSizes;
+        poolSizes[0].setType(vk::DescriptorType::eUniformBuffer)
+            .setDescriptorCount((uint32_t)(MAX_FRAMES_IN_FLIGHT));
+        poolSizes[1].setType(vk::DescriptorType::eCombinedImageSampler)
+            .setDescriptorCount((uint32_t)(MAX_FRAMES_IN_FLIGHT));
 
         vk::DescriptorPoolCreateInfo poolInfo;
-        poolInfo.setPoolSizeCount(1)
-            .setPPoolSizes(&poolSize)
+        poolInfo.setPoolSizeCount((uint32_t)(poolSizes.size()))
+            .setPPoolSizes(poolSizes.data())
             .setMaxSets((uint32_t)MAX_FRAMES_IN_FLIGHT);
 
         mDescriptorPool = device_->GetDevice().createDescriptorPool(poolInfo);
@@ -54,16 +58,27 @@ namespace toy
                 .setOffset(0)
                 .setRange(sizeof(UniformBufferObject));
 
-            vk::WriteDescriptorSet descriptorWrite;
-            descriptorWrite.setDstSet(mDescriptorSets[i])
+            vk::DescriptorImageInfo imageInfo;
+            imageInfo.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+                .setImageView(mTextureImageView)
+                .setSampler(textureSampler_->GetSampler());
+
+            std::array<vk::WriteDescriptorSet, 2> descriptorWrites;
+            descriptorWrites[0].setDstSet(mDescriptorSets[i])
                 .setDstBinding(0)
                 .setDstArrayElement(0)
                 .setDescriptorType(vk::DescriptorType::eUniformBuffer)
                 .setDescriptorCount(1)
-                .setPBufferInfo(&bufferInfo)
-                .setPImageInfo(nullptr)
-                .setPTexelBufferView(nullptr);
-            device_->GetDevice().updateDescriptorSets(descriptorWrite, nullptr);
+                .setPBufferInfo(&bufferInfo);
+
+            descriptorWrites[1].setDstSet(mDescriptorSets[i])
+                .setDstBinding(1)
+                .setDstArrayElement(0)
+                .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
+                .setDescriptorCount(1)
+                .setPImageInfo(&imageInfo);
+
+            device_->GetDevice().updateDescriptorSets(descriptorWrites, nullptr);
         }
     }
 }

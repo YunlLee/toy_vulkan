@@ -20,6 +20,8 @@ namespace toy
     class GcVertexBuffer;
     class GcDescriptorSetLayout;
     class GcDescriptor;
+    class GcTextureImage;
+    class GcTextureSampler;
 }
 
 
@@ -49,6 +51,8 @@ private:
     std::vector<vk::Semaphore> renderFinishedSemaphores;
     std::vector<vk::Fence> inFlightFences;
 
+    vk::ImageView textureImgView;
+
     uint32_t currentFrame = 0;
 
     std::shared_ptr<toy::Window> window_;
@@ -63,6 +67,8 @@ private:
     std::shared_ptr<toy::GcCommandBuffer> commandBuffer_;
     std::shared_ptr<toy::GcVertexBuffer> buffer_;
     std::shared_ptr<toy::GcDescriptor> descriptor_;
+    std::shared_ptr<toy::GcTextureImage> texture_;
+    std::shared_ptr<toy::GcTextureSampler> textureSampler_;
 };
 
 #endif //APPLICATION_HPP

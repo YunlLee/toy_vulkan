@@ -26,6 +26,7 @@ namespace toy
         device_->GetDevice().freeMemory(mVertexBufferMemory);
         VK_D(Buffer, device_->GetDevice(), mIndexBuffer);
         device_->GetDevice().freeMemory(mIndexBufferMemory);
+
         for(int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
             device_->GetDevice().destroyBuffer(uniformBuffers[i]);
@@ -170,7 +171,6 @@ namespace toy
         }
         throw std::runtime_error("failed to create suitable memory type!");
     }
-
 
     /**
      * Allocate memory for vk::Buffer.

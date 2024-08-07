@@ -29,6 +29,7 @@ namespace toy
         }
 
         vk::PhysicalDeviceFeatures features{};
+        features.setSamplerAnisotropy(VK_TRUE);
 
         vk::DeviceCreateInfo deviceInfo;
         deviceInfo.setFlags(vk::DeviceCreateFlags())

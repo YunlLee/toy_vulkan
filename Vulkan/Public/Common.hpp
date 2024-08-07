@@ -8,8 +8,13 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.hpp>
+
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
+#include "image/stb_image.h"
 
 // Cpp std
 #include <iostream>
@@ -49,6 +54,7 @@ const int MAX_FRAMES_IN_FLIGHT = 2;
 #endif
 
 #define GC_RES_SHADER_DIR GC_DEFINE_RES_ROOT_DIR"Shader/"
+#define GC_RES_TEXTURE_DIR GC_DEFINE_RES_ROOT_DIR"Texture/"
 
 #define VK_CREATE(condation, message) try{\
         condation;\

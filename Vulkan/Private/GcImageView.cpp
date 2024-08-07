@@ -50,4 +50,18 @@ namespace toy
         LOG_T("{0} : Image view array: {1}", __FUNCTION__, mImageViews.size());
 
     }
+
+    vk::ImageView GcImageView::createTextureImageView(vk::Image img)
+    {
+        vk::ImageView imgView;
+        vk::ImageViewCreateInfo textureImageViewInfo;
+        textureImageViewInfo.setImage(img)
+            .setViewType(vk::ImageViewType::e2D)
+            .setFormat(vk::Format::eR8G8B8A8Srgb)
+            .setSubresourceRange(vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor,
+                0, 1, 0, 1
+            });
+        VK_CREATE(imgView = device_->GetDevice().createImageView(textureImageViewInfo), "failed to create texture image view!");
+        return imgView;
+    }
 }
