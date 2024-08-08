@@ -131,6 +131,13 @@ namespace toy
 
         // depth & stencil
         vk::PipelineDepthStencilStateCreateInfo depthStencilInfo;
+        depthStencilInfo.setDepthTestEnable(VK_TRUE)
+            .setDepthWriteEnable(VK_TRUE)
+            .setDepthCompareOp(vk::CompareOp::eLess)
+            .setDepthBoundsTestEnable(VK_TRUE)
+            .setMinDepthBounds(0.0f)
+            .setMaxDepthBounds(1.0f)
+            .setStencilTestEnable(VK_FALSE);
 
         // color blend
         vk::PipelineColorBlendAttachmentState colorBlendAttachment;
@@ -160,7 +167,7 @@ namespace toy
             .setPViewportState(&viewportStageInfo)
             .setPRasterizationState(&rasterizationStageInfo)
             .setPMultisampleState(&multisampleStateInfo)
-            .setPDepthStencilState(nullptr)
+            .setPDepthStencilState(&depthStencilInfo)
             .setPColorBlendState(&colorBlending)
             .setPDynamicState(&dynamicState);
         pipelineInfo.setLayout(mPipelineLayout)

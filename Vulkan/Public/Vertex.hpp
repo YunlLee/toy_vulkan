@@ -9,7 +9,7 @@ namespace toy
 {
     struct Vertex
     {
-        glm::vec2 pos;
+        glm::vec3 pos;
         glm::vec3 color;
         glm::vec2 texCoord;
 
@@ -27,7 +27,7 @@ namespace toy
             std::array<vk::VertexInputAttributeDescription, 3> attributeDescriptions;
             attributeDescriptions[0].setBinding(0)
                 .setLocation(0)
-                .setFormat(vk::Format::eR32G32Sfloat)
+                .setFormat(vk::Format::eR32G32B32Sfloat)
                 .setOffset(offsetof(Vertex,pos));
 
             attributeDescriptions[1].setBinding(0)

@@ -31,6 +31,7 @@ namespace toy
 
     private:
         std::vector<vk::ImageView> mImageViews;
+        vk::ImageView mTextureImageView;
 
         VkSwapchain* swapchain_;
         VkDevice* device_;

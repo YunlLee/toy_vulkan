@@ -5,6 +5,7 @@
 #ifndef GCFRAMEBUFFER_HPP
 #define GCFRAMEBUFFER_HPP
 
+#include <GcDepthImage.hpp>
 #include <GcImageView.hpp>
 #include <GcRenderPass.hpp>
 
@@ -15,11 +16,12 @@ namespace toy
     class VkDevice;
     class GcImageView;
     class GcRenderPass;
+    class GcDepthImage;
 
     class GcFramebuffer
     {
     public:
-        GcFramebuffer(VkDevice* devce, GcImageView* imageView, GcRenderPass* renderPass);
+        GcFramebuffer(VkDevice* devce, GcImageView* imageView, GcRenderPass* renderPass, GcDepthImage* depthImage);
         ~GcFramebuffer();
 
         void createFramebufer();
@@ -31,6 +33,7 @@ namespace toy
         VkDevice* device_;
         GcImageView* imageView_;
         GcRenderPass* renderPass_;
+        GcDepthImage* depthImage_;
     };
 
 }

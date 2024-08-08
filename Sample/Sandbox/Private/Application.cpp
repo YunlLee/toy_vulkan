@@ -4,6 +4,8 @@
 
 #include "Application.hpp"
 
+#include <GcDepthImage.hpp>
+
 #include "GcVertexBuffer.hpp"
 #include <GcImageView.hpp>
 #include <VkDevice.hpp>
@@ -39,12 +41,13 @@ void Application::initVulkan()
     device_ = std::make_shared<toy::VkDevice>(content_.get(), 1, 1);
     swapchain_ = std::make_shared<toy::VkSwapchain>(content_.get(), device_.get());
     imageView_ = std::make_shared<toy::GcImageView>(device_.get(), swapchain_.get());
-    renderPass_ = std::make_shared<toy::GcRenderPass>(device_.get(), swapchain_.get());
+    renderPass_ = std::make_shared<toy::GcRenderPass>(content_.get(), device_.get(), swapchain_.get());
     descriptorSetLayout_ = std::make_shared<toy::GcDescriptorSetLayout>(device_.get());
     pipeline_ = std::make_shared<toy::GcPipeline>(device_.get(), swapchain_.get(),
         renderPass_.get(), descriptorSetLayout_.get());
-    framebuffer_ = std::make_shared<toy::GcFramebuffer>(device_.get(), imageView_.get(), renderPass_.get());
     commandBuffer_ = std::make_shared<toy::GcCommandBuffer>(content_.get(), device_.get());
+    depthImage_ = std::make_shared<toy::GcDepthImage>(content_.get(), device_.get(), swapchain_.get(), commandBuffer_.get());
+    framebuffer_ = std::make_shared<toy::GcFramebuffer>(device_.get(), imageView_.get(), renderPass_.get(), depthImage_.get());
     texture_ = std::make_shared<toy::GcTextureImage>(device_.get(), content_.get(), commandBuffer_.get());
     textureImgView = imageView_->createTextureImageView(texture_->GetTextureImage());
     buffer_ = std::make_shared<toy::GcVertexBuffer>(content_.get(), device_.get(), commandBuffer_.get());
@@ -76,8 +79,9 @@ void Application::cleanUp()
         VK_D(Fence, device_->GetDevice(), inFlightFences[i]);
     }
 
-    textureSampler_.reset();
+    depthImage_.reset();
 
+    textureSampler_.reset();
 
     descriptor_.reset();
     texture_.reset();
@@ -117,9 +121,11 @@ void Application::recordCommandBuffer(vk::CommandBuffer cmdBuffer, uint32_t imag
     renderPassBeginInfo.setRenderPass(renderPass_->GetRenderPass())
         .setFramebuffer(framebuffer_->GetFramebuffers(imageIndex))
         .setRenderArea({{0,0}, swapchain_->GetExtent()});
-    vk::ClearValue clearValue{{0.1f, 0.2f, 0.3f, 1.0f}};
-    renderPassBeginInfo.setClearValueCount(1)
-        .setPClearValues(&clearValue);
+    std::array<vk::ClearValue, 2> clearValues;
+    clearValues[0].setColor({0.1f, 0.2f, 0.3f, 1.0f});
+    clearValues[1].setDepthStencil({1.0f, 0});
+    renderPassBeginInfo.setClearValueCount((uint32_t)(clearValues.size()))
+        .setPClearValues(clearValues.data());
 
     cmdBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
@@ -254,7 +260,7 @@ void Application::recreateSwapChain()
 
     swapchain_ = std::make_shared<toy::VkSwapchain>(content_.get(), device_.get());
     imageView_ = std::make_shared<toy::GcImageView>(device_.get(), swapchain_.get());
-    framebuffer_ = std::make_shared<toy::GcFramebuffer>(device_.get(), imageView_.get(), renderPass_.get());
+    framebuffer_ = std::make_shared<toy::GcFramebuffer>(device_.get(), imageView_.get(), renderPass_.get(), depthImage_.get());
 }
 
 void Application::updateUniformBuffer(uint32_t currentImage)

@@ -17,6 +17,7 @@ add_library(Vulkan
         External/image/stb_image.cpp
         Private/GcTextureImage.cpp
         Private/GcTextureSampler.cpp
+        Private/GcDepthImage.cpp
 )
 
 target_include_directories(Vulkan PUBLIC External)

@@ -6,11 +6,12 @@
 #include "VkDevice.hpp"
 #include "GcRenderPass.hpp"
 #include "GcImageView.hpp"
+#include "GcDepthImage.hpp"
 
 namespace toy
 {
-    GcFramebuffer::GcFramebuffer(VkDevice* device, GcImageView* imageView, GcRenderPass* renderPass)
-        :device_(device), imageView_(imageView), renderPass_(renderPass){
+    GcFramebuffer::GcFramebuffer(VkDevice* device, GcImageView* imageView, GcRenderPass* renderPass, GcDepthImage* depthImage)
+        :device_(device), imageView_(imageView), renderPass_(renderPass), depthImage_(depthImage){
         createFramebufer();
     }
 
@@ -27,13 +28,18 @@ namespace toy
         mFramebuffers.resize(imageView_->GetImageViews().size());
 
         LOG_T("----------------------");
+
+
         for(int i = 0; i < imageView_->GetImageViews().size(); i++)
         {
-            vk::ImageView attachments[] = {(imageView_->GetImageViews())[i] };
+            std::array<vk::ImageView, 2> attachments = {
+                imageView_->GetImageViews()[i],
+                depthImage_->GetImageView()
+            };
             vk::FramebufferCreateInfo framebufferInfo;
             framebufferInfo.setRenderPass(renderPass_->GetRenderPass())
-                .setAttachmentCount(1)
-                .setPAttachments(attachments)
+                .setAttachmentCount((uint32_t)attachments.size())
+                .setPAttachments(attachments.data())
                 .setWidth(imageView_->GetImageWidth())
                 .setHeight(imageView_->GetImageHeight())
                 .setLayers(1);

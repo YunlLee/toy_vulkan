@@ -79,11 +79,10 @@ namespace toy
 
         VK_CREATE(image = device_->GetDevice().createImage(imageInfo), "failed to create image!");
 
-        vk::MemoryRequirements memRequirements = device_->GetDevice().getImageMemoryRequirements(textureImage);
+        vk::MemoryRequirements memRequirements = device_->GetDevice().getImageMemoryRequirements(image);
         vk::MemoryAllocateInfo memoryInfo;
         memoryInfo.setAllocationSize(memRequirements.size)
             .setMemoryTypeIndex(findMemoryType(memRequirements.memoryTypeBits, property));
-
         VK_CREATE(imageMemory = device_->GetDevice().allocateMemory(memoryInfo), "failed to create image memory!");
 
         device_->GetDevice().bindImageMemory(image, imageMemory, 0);
@@ -171,6 +170,7 @@ namespace toy
             .setDstQueueFamilyIndex(vk::QueueFamilyIgnored)
             .setImage(image)
             .setSubresourceRange(imageRange);
+
         if(oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eTransferDstOptimal)
         {
             barrier.setSrcAccessMask(vk::AccessFlags())

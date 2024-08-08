@@ -11,14 +11,19 @@ namespace toy
 {
     class VkDevice;
     class VkSwapchain;
+    class VkContent;
 
     class GcRenderPass
     {
     public:
-        GcRenderPass(VkDevice* device, VkSwapchain* swapchain);
+        GcRenderPass(VkContent* content, VkDevice* device, VkSwapchain* swapchain);
         ~GcRenderPass();
 
         [[nodiscard]] vk::RenderPass GetRenderPass() const { return mHandle; }
+
+        vk::Format findDepthFormat();
+        vk::Format findSupportedFormat(const std::vector<vk::Format> candidates,
+            vk::ImageTiling tiling, vk::FormatFeatureFlags features);
     private:
         void createRenderPass();
 
@@ -26,6 +31,7 @@ namespace toy
 
         VkDevice* device_;
         VkSwapchain* swapchain_;
+        VkContent* content_;
     };
 }
 

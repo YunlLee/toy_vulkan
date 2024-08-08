@@ -22,6 +22,7 @@ namespace toy
     class GcDescriptor;
     class GcTextureImage;
     class GcTextureSampler;
+    class GcDepthImage;
 }
 
 
@@ -69,6 +70,7 @@ private:
     std::shared_ptr<toy::GcDescriptor> descriptor_;
     std::shared_ptr<toy::GcTextureImage> texture_;
     std::shared_ptr<toy::GcTextureSampler> textureSampler_;
+    std::shared_ptr<toy::GcDepthImage> depthImage_;
 };
 
 #endif //APPLICATION_HPP
