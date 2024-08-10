@@ -57,6 +57,9 @@ const int MAX_FRAMES_IN_FLIGHT = 2;
 #define GC_RES_SHADER_DIR GC_DEFINE_RES_ROOT_DIR"Shader/"
 #define GC_RES_TEXTURE_DIR GC_DEFINE_RES_ROOT_DIR"Texture/"
 
+#define GC_RES_VIKINGROOM_MOD_DIR GC_DEFINE_RES_ROOT_DIR"model/"
+#define GC_RES_VIKINGROOM_TEX_DIR GC_DEFINE_RES_ROOT_DIR"Texture/"
+
 #define VK_CREATE(condation, message) try{\
         condation;\
     }\

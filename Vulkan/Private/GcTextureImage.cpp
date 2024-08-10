@@ -29,8 +29,12 @@ namespace toy
         vk::DeviceMemory stagingBufferMemory;
 
         int texWidth, texHeight, texChannels;
-        stbi_uc* pixels = stbi_load(GC_RES_TEXTURE_DIR"texture01.jpg",
-            &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        // stbi_uc* pixels = stbi_load(GC_RES_TEXTURE_DIR"texture01.jpg",
+        //         &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+
+        stbi_uc* pixels = stbi_load(GC_RES_VIKINGROOM_TEX_DIR"viking_room.png",
+                &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+
         vk::DeviceSize imageSize = texWidth * texHeight * 4;
 
         if(!pixels)

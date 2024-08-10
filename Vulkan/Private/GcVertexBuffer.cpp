@@ -5,6 +5,7 @@
 #include "GcVertexBuffer.hpp"
 
 #include <VkQueue.hpp>
+#include <Loader/tiny_obj_loader.h>
 
 #include "VkDevice.hpp"
 #include "VkContent.hpp"
@@ -15,6 +16,7 @@ namespace toy
 
     GcVertexBuffer::GcVertexBuffer(VkContent* content, VkDevice* device, GcCommandBuffer* commandBuffer)
         :content_(content), device_(device), commandBuffer_(commandBuffer){
+        loadModel();
         createVertexBuffer();
         createIndexBuffer();
         createUniformBuffers();
@@ -201,5 +203,40 @@ namespace toy
         device_->GetDevice().unmapMemory(mVertexBufferMemory);
     }
 
+    void GcVertexBuffer::loadModel()
+    {
+        tinyobj::attrib_t attrib;
+        std::vector<tinyobj::shape_t> shapes;
+        std::vector<tinyobj::material_t> materials;
+        std::string warn, err;
 
+        if(!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, GC_RES_VIKINGROOM_MOD_DIR"viking_room.obj"))
+        {
+            throw std::runtime_error(warn + err);
+        }
+
+        for(const auto& shape : shapes)
+        {
+            for(const auto& index : shape.mesh.indices)
+            {
+                Vertex vertex{};
+
+                vertex.pos = {
+                    attrib.vertices[3 * index.vertex_index + 0],
+                    attrib.vertices[3 * index.vertex_index + 1],
+                    attrib.vertices[3 * index.vertex_index + 2]
+                };
+
+                vertex.texCoord = {
+                    attrib.texcoords[2 * index.texcoord_index + 0],
+                    attrib.texcoords[2 * index.texcoord_index + 1]
+                };
+
+                vertex.color = {1.0f, 1.0f, 1.0f};
+
+                vertices.push_back(vertex);
+                indices.push_back(indices.size());
+            }
+        }
+    }
 }

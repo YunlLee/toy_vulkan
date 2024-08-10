@@ -136,7 +136,7 @@ void Application::recordCommandBuffer(vk::CommandBuffer cmdBuffer, uint32_t imag
     vk::DeviceSize offsets[] = {0};
     cmdBuffer.bindVertexBuffers(0, vertexBuffer, offsets);
 
-    cmdBuffer.bindIndexBuffer(buffer_->GetIndexBuffer(), 0, vk::IndexType::eUint16);
+    cmdBuffer.bindIndexBuffer(buffer_->GetIndexBuffer(), 0, vk::IndexType::eUint32);
 
     cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
         pipeline_->GetPipelineLayout(), 0, descriptor_->GetDescriptorSet()[currentFrame], nullptr);
@@ -153,7 +153,7 @@ void Application::recordCommandBuffer(vk::CommandBuffer cmdBuffer, uint32_t imag
 
     // 4. drawing
     // cmdBuffer.draw((uint32_t)toy::vertices.size(), 1, 0, 0);
-    cmdBuffer.drawIndexed((uint32_t)toy::indices.size(), 1, 0, 0, 0);
+    cmdBuffer.drawIndexed((uint32_t)buffer_->GetIndices().size(), 1, 0, 0, 0);
 
     // 5. finishing up
     cmdBuffer.endRenderPass();

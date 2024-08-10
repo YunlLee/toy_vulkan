@@ -18,6 +18,7 @@ add_library(Vulkan
         Private/GcTextureImage.cpp
         Private/GcTextureSampler.cpp
         Private/GcDepthImage.cpp
+        External/Loader/tiny_obj_loader.cpp
 )
 
 target_include_directories(Vulkan PUBLIC External)

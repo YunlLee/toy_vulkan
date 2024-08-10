@@ -43,7 +43,6 @@ namespace toy
         void transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
 
         void copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t w, uint32_t h);
-
     private:
 
         vk::Image textureImage;

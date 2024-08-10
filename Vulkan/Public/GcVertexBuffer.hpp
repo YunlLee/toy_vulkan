@@ -11,22 +11,22 @@
 
 namespace toy
 {
-    const std::vector<Vertex> vertices = {
-        {{-0.5f, -0.5f, 0.0f},{1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-        {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-        {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-        {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-
-        {{-0.5f, -0.5f, -0.5f},{1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-        {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-        {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-        {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
-    };
-
-    const std::vector<uint16_t> indices = {
-        0, 1, 2, 2, 3, 0,
-        4, 5, 6, 6, 7, 4
-    };
+    // const std::vector<Vertex> vertices = {
+    //     {{-0.5f, -0.5f, 0.0f},{1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+    //     {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+    //     {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+    //     {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
+    //
+    //     {{-0.5f, -0.5f, -0.5f},{1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+    //     {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+    //     {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+    //     {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
+    // };
+    //
+    // const std::vector<uint32_t> indices = {
+    //     0, 1, 2, 2, 3, 0,
+    //     4, 5, 6, 6, 7, 4
+    // };
 
     class VkDevice;
     class VkContent;
@@ -43,6 +43,8 @@ namespace toy
         [[nodiscard]] std::vector<vk::Buffer> GetUniformBuffers() const { return uniformBuffers; }
         [[nodiscard]] std::vector<vk::DeviceMemory> GetUniformBuffersMemory() const { return uniformBuffersMemory; }
         [[nodiscard]] std::vector<void*> GetUniformBuffersMapped() const { return uniformBuffersMapped; }
+        [[nodiscard]] std::vector<Vertex> GetVertex() const { return vertices; }
+        [[nodiscard]] std::vector<uint32_t> GetIndices() const { return indices; }
 
     private:
         void createVertexBuffer();
@@ -55,6 +57,8 @@ namespace toy
         void copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size);
         void createUniformBuffers();
 
+        void loadModel();
+
     private:
         vk::Buffer mHandle;
         vk::DeviceMemory mVertexBufferMemory;
@@ -64,6 +68,9 @@ namespace toy
         std::vector<vk::Buffer> uniformBuffers;
         std::vector<vk::DeviceMemory> uniformBuffersMemory;
         std::vector<void*> uniformBuffersMapped;
+
+        std::vector<Vertex> vertices;
+        std::vector<uint32_t> indices;
 
         VkDevice* device_;
         VkContent* content_;

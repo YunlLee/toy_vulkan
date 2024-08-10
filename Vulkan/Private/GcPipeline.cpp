@@ -134,7 +134,7 @@ namespace toy
         depthStencilInfo.setDepthTestEnable(VK_TRUE)
             .setDepthWriteEnable(VK_TRUE)
             .setDepthCompareOp(vk::CompareOp::eLess)
-            .setDepthBoundsTestEnable(VK_TRUE)
+            .setDepthBoundsTestEnable(VK_FALSE)
             .setMinDepthBounds(0.0f)
             .setMaxDepthBounds(1.0f)
             .setStencilTestEnable(VK_FALSE);
